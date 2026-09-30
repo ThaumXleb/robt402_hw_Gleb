@@ -7,7 +7,7 @@ The program runs inside **Ubuntu on WSL/WSLg** and connects to a **Raspberry Pi 
 Main script:
 
 ```text
-imu_3d_wsl_opengl_fixed.py
+imu_3d_wsl_opengl.py
 ```
 
 ## System architecture
@@ -264,7 +264,31 @@ pip install --upgrade "PyOpenGL==3.1.10"
 
 # 5. Configure the Raspberry Pi connection
 
-The program reads connection settings from environment variables:
+The Raspberry Pi **host/IP address can be passed directly as the first command-line argument**:
+
+```bash
+python3 imu_3d_wsl_opengl.py 192.168.8.235
+```
+
+If the Raspberry Pi gets a different IP address, simply pass the new address:
+
+```bash
+python3 imu_3d_wsl_opengl.py 192.168.8.120
+```
+
+The command-line syntax is:
+
+```text
+python3 imu_3d_wsl_opengl.py [host]
+```
+
+You can display the built-in help with:
+
+```bash
+python3 imu_3d_wsl_opengl.py --help
+```
+
+The script also supports environment variables:
 
 ```text
 RPI_HOST
@@ -272,21 +296,36 @@ RPI_USER
 RPI_PASSWORD
 ```
 
-Set them before running the program:
+`RPI_USER` and `RPI_PASSWORD` are useful for changing the SSH credentials without editing the Python file:
 
 ```bash
-export RPI_HOST=192.168.8.235
 export RPI_USER=gleb
 export RPI_PASSWORD='your_raspberry_pi_password'
+python3 imu_3d_wsl_opengl.py 192.168.8.235
 ```
 
-Then start the program:
+The host selection order is:
+
+```text
+command-line host argument
+        |
+        v
+RPI_HOST environment variable
+        |
+        v
+built-in default: 192.168.8.235
+```
+
+For example, if `RPI_HOST` is set but a host is also supplied on the command line, the command-line value is used:
 
 ```bash
-python3 imu_3d_wsl_opengl_fixed.py
+export RPI_HOST=10.1.75.200
+python3 imu_3d_wsl_opengl.py 192.168.8.235
 ```
 
-The script currently contains fallback values if the environment variables are not set. For a GitHub repository, using environment variables is preferred so that real passwords are not committed to source control.
+In this example the program connects to `192.168.8.235`.
+
+For a GitHub repository, prefer environment variables for credentials so that a real password is not committed to source control.
 
 ---
 
@@ -312,7 +351,7 @@ You can also force the same behavior from the terminal:
 ```bash
 export PYOPENGL_PLATFORM=glx
 unset WAYLAND_DISPLAY
-python3 imu_3d_wsl_opengl_fixed.py
+python3 imu_3d_wsl_opengl.py
 ```
 
 The program also creates the GLUT/OpenGL context on the **main thread before starting the SSH worker thread**. This avoids another common source of OpenGL context errors.
@@ -328,18 +367,25 @@ cd ~/robt402
 source .venv/bin/activate
 ```
 
-Optionally export the connection information:
+The recommended way to start the visualization is to pass the Raspberry Pi IP directly:
+
+```bash
+python3 imu_3d_wsl_opengl.py 192.168.8.235
+```
+
+If needed, set the SSH username and password first:
+
+```bash
+export RPI_USER=gleb
+export RPI_PASSWORD='your_raspberry_pi_password'
+python3 imu_3d_wsl_opengl.py 192.168.8.235
+```
+
+You can also omit the host argument and use `RPI_HOST`:
 
 ```bash
 export RPI_HOST=192.168.8.235
-export RPI_USER=gleb
-export RPI_PASSWORD='your_raspberry_pi_password'
-```
-
-Run:
-
-```bash
-python3 imu_3d_wsl_opengl_fixed.py
+python3 imu_3d_wsl_opengl.py
 ```
 
 Expected startup output is similar to:
@@ -509,7 +555,7 @@ If `i2ctransfer` is unavailable, the program falls back to individual `i2cget` o
 
 # 14. Program structure
 
-The main parts of `imu_3d_wsl_opengl_fixed.py` are:
+The main parts of `imu_3d_wsl_opengl.py` are:
 
 ```text
 Configuration
@@ -564,7 +610,7 @@ Make sure you are running the fixed version of the script and that the GLX backe
 ```bash
 export PYOPENGL_PLATFORM=glx
 unset WAYLAND_DISPLAY
-python3 imu_3d_wsl_opengl_fixed.py
+python3 imu_3d_wsl_opengl.py
 ```
 
 Also check your PyOpenGL version:
@@ -611,14 +657,24 @@ ssh gleb@192.168.8.235
 
 If this fails, fix the SSH credentials/network connection before troubleshooting the Python program.
 
-Verify the variables used by the script:
+If you are using a command-line host, verify the same address works with normal SSH:
+
+```bash
+ssh gleb@192.168.8.235
+```
+
+If you are using environment variables, verify them with:
 
 ```bash
 echo "$RPI_HOST"
 echo "$RPI_USER"
 ```
 
-Re-export them if necessary.
+Re-export them if necessary, or pass the host directly:
+
+```bash
+python3 imu_3d_wsl_opengl.py 192.168.8.235
+```
 
 ---
 
@@ -763,19 +819,20 @@ Verify graphics:
 glxinfo -B
 ```
 
-Set the Pi connection:
+Set the SSH credentials if necessary:
 
 ```bash
-export RPI_HOST=192.168.8.235
 export RPI_USER=gleb
 export RPI_PASSWORD='your_raspberry_pi_password'
 ```
 
-Run:
+Run and pass the Raspberry Pi IP address:
 
 ```bash
-python3 imu_3d_wsl_opengl_fixed.py
+python3 imu_3d_wsl_opengl.py 192.168.8.235
 ```
+
+If the Pi address changes, only the final argument needs to change.
 
 Keep the IMU stationary during startup calibration, then press `Z` and rotate the physical sensor.
 
@@ -785,6 +842,6 @@ Keep the IMU stationary during startup calibration, then press `Z` and rotate th
 
 ```text
 README.md
-imu_3d_wsl_opengl_fixed.py
+imu_3d_wsl_opengl.py
 ```
 
